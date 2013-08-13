@@ -458,6 +458,11 @@ else {
 	}
 	
 	if($table != "") {
+		$debug = "";
+		if($_GET["option"][0] == "1") {
+			$debug = " or die(mysql_error())";
+		}
+		
 		$chs = $_GET['ch'];
 		$requete = mysql_query("SHOW COLUMNS FROM ".$table);
 		$combien_results = mysql_num_rows($requete);
@@ -470,12 +475,17 @@ else {
 							<a href='./?check=au'>Aucuns</a> - <a href='./?check=tt'>Tous</a> (".$combien_results.")
 						</div>");
 						if($combien_results > 0) {
+							$cle = "";
+							$i=0;
 							while($ligne = mysql_fetch_assoc($requete)) {
+								if($i == 0) {
+									$cle = $ligne["Field"];
+								}
 								echo "<div>
 									<label>
 										<input type='checkbox' name='ch[]' value=\"".$ligne["Field"]."\"";
 										if($_GET["check"] != "au") {
-											if(@in_array($ligne["Field"], $chs) || $_GET["check"] == "tt") {
+											if(in_array($ligne["Field"], $chs) || $_GET["check"] == "tt") {
 												echo " checked";
 											}
 										}
@@ -483,6 +493,7 @@ else {
 										<b>".$ligne["Field"]."</b> ".$ligne["Type"]."
 									</label>
 								</div>";
+								$i++;
 							}
 						}
 					echo("</td>
@@ -494,6 +505,12 @@ else {
 				<input type='submit' name='action' value='SELECT' class='btn btn_gris' />
 				<input type='submit' name='action' value='INSERT' class='btn btn_gris' />
 				<input type='submit' name='action' value='UPDATE' class='btn btn_gris' />
+				<input type='submit' name='action' value='INSERT OR UPDATE' class='btn btn_gris' />
+				<label><input type='checkbox' name='option[]' value='1'");
+				if($debug != "") {
+					echo(" checked");
+				}
+				echo(" /> Debug</label>
 			</div>
 		</form>");
 		
@@ -503,7 +520,7 @@ else {
 			foreach($chs as $value) {
 				$liste_ch_ligne .= "\t$".$value." = $"."ligne[\"".$value."\"];\n";
 			}
-			$html = "$"."requete = mysql_query(\"SELECT * FROM ".$table."\");\nwhile($"."ligne = mysql_fetch_array($"."requete)) {\n".$liste_ch_ligne."}";
+			$html = "$"."requete = mysql_query(\"SELECT * FROM ".$table." WHERE ".$cle."=&#092;\"\".$".$cle.".\"&#092;\"\")".$debug.";\nwhile($"."ligne = mysql_fetch_array($"."requete)) {\n".$liste_ch_ligne."}";
 			
 			echo "<textarea style='height: ".$hauteur."px;'>".$html."</textarea>";
 		}
@@ -521,7 +538,7 @@ else {
 				$liste_ch_ligne .= "\t$".$value." = $"."ligne[\"".$value."\"];\n";
 				$i++;
 			}
-			$html = "$"."requete = mysql_query(\"SELECT ".$liste_ch." FROM ".$table."\");\nwhile($"."ligne = mysql_fetch_array($"."requete)) {\n".$liste_ch_ligne."}";
+			$html = "$"."requete = mysql_query(\"SELECT ".$liste_ch." FROM ".$table." WHERE ".$cle."=&#092;\"\".$".$cle.".\"&#092;\"\")".$debug.";\nwhile($"."ligne = mysql_fetch_array($"."requete)) {\n".$liste_ch_ligne."}";
 			
 			echo "<textarea".set_height($html).">".$html."</textarea>";
 		}
@@ -539,7 +556,7 @@ else {
 				$liste_ch_ligne .= "&#092;\"\".$".$value.".\"&#092;\"";
 				$i++;
 			}
-			$html = "$"."requete = mysql_query(\"INSERT INTO `".$table."` (".$liste_ch.") VALUES (".$liste_ch_ligne.")\");";
+			$html = "$"."requete = mysql_query(\"INSERT INTO `".$table."` (".$liste_ch.") VALUES (".$liste_ch_ligne.")\")".$debug.";";
 			
 			echo "<textarea>".$html."</textarea>";
 		}
@@ -555,7 +572,28 @@ else {
 				$liste_ch .= "`".$value."`=&#092;\"\".$".$value.".\"&#092;\"";
 				$i++;
 			}
-			$html = "$"."requete = mysql_query(\"UPDATE ".$table." SET ".$liste_ch."\");";
+			$html = "$"."requete = mysql_query(\"UPDATE ".$table." SET ".$liste_ch." WHERE ".$cle."=&#092;\"\".$".$cle.".\"&#092;\"\")".$debug.";";
+			
+			echo "<textarea>".$html."</textarea>";
+		}
+		
+		if($_GET["action"] == "INSERT OR UPDATE") {
+			$i = 0;
+			$liste_ch_up = "";
+			$liste_ch = "";
+			$liste_ch_ligne = "";
+			foreach($chs as $value) {
+				if($i > 0) {
+					$liste_ch_up .= ",";
+					$liste_ch .= ",";
+					$liste_ch_ligne .= ",";
+				}
+				$liste_ch_up .= "`".$value."`=&#092;\"\".$".$value.".\"&#092;\"";
+				$liste_ch .= "`".$value."`";
+				$liste_ch_ligne .= "&#092;\"\".$".$value.".\"&#092;\"";
+				$i++;
+			}
+			$html = "$"."requete = mysql_query(\"INSERT INTO `".$table."` (".$liste_ch.") VALUES (".$liste_ch_ligne.") ON DUPLICATE KEY UPDATE ".$liste_ch_up."\")".$debug.";";
 			
 			echo "<textarea>".$html."</textarea>";
 		}
