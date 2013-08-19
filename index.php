@@ -485,7 +485,7 @@ else {
 									<label>
 										<input type='checkbox' name='ch[]' value=\"".$ligne["Field"]."\"";
 										if($_GET["check"] != "au") {
-											if(in_array($ligne["Field"], $chs) || $_GET["check"] == "tt") {
+											if(@in_array($ligne["Field"], $chs) || $_GET["check"] == "tt") {
 												echo " checked";
 											}
 										}
