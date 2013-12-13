@@ -347,7 +347,7 @@ TEXTAREA {
 	<div class="deco">
     	
     </div>
-    Outils Point Carré par <a href="http://www.pointcarre.net" target="_blank">Point Carré Interactive</a></div>
+    Générateur de requêtes MySQL PHP par Liko</div>
 
 <div class="menu">
     <?php
